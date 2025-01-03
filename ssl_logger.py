@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Copyright 2017 Google Inc. All Rights Reserved.
 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,12 +55,12 @@ _FRIDA_SCRIPT = """
   /**
    * Initializes 'addresses' dictionary and NativeFunctions.
    */
+  var addresses = {};
+  var SSL_get_fd,SSL_get_session,SSL_SESSION_get_id,getpeername,getsockname,ntohs,ntohl=null;
+
   function initializeGlobals()
   {
-    addresses = {};
-
     var resolver = new ApiResolver("module");
-
     var exps = [
       ["*libssl*",
         ["SSL_read", "SSL_write", "SSL_get_fd", "SSL_get_session",
@@ -284,7 +285,7 @@ def ssl_log(process, pcap=None, verbose=False):
     for writes in (
         # PCAP record (packet) header
         ("=I", int(t)),                   # Timestamp seconds
-        ("=I", (t * 1000000) % 1000000),  # Timestamp microseconds
+        ("=I", int((t * 1000000) % 1000000)),  # Timestamp microseconds
         ("=I", 40 + len(data)),           # Number of octets saved
         ("=i", 40 + len(data)),           # Actual length of packet
         # IPv4 header
@@ -340,20 +341,22 @@ def ssl_log(process, pcap=None, verbose=False):
                                   struct.pack(">I", p["src_addr"]))
       dst_addr = socket.inet_ntop(socket.AF_INET,
                                   struct.pack(">I", p["dst_addr"]))
-      print "SSL Session: " + p["ssl_session_id"]
-      print "[%s] %s:%d --> %s:%d" % (
+      print("SSL Session: " + p["ssl_session_id"])
+      print("[%s] %s:%d --> %s:%d" % (
           p["function"],
           src_addr,
           p["src_port"],
           dst_addr,
-          p["dst_port"])
+          p["dst_port"]))
       hexdump.hexdump(data)
-      print
+      #print
     if pcap:
       log_pcap(pcap_file, p["ssl_session_id"], p["function"], p["src_addr"],
                p["src_port"], p["dst_addr"], p["dst_port"], data)
 
-  session = frida.attach(process)
+  #default connect to localhost:27042
+  dev = frida.get_remote_device()
+  session = dev.attach(process)
 
   if pcap:
     pcap_file = open(pcap, "wb", 0)
@@ -371,7 +374,7 @@ def ssl_log(process, pcap=None, verbose=False):
   script.on("message", on_message)
   script.load()
 
-  print "Press Ctrl+C to stop logging."
+  print("Press Ctrl+C to stop logging.")
   try:
     signal.pause()
   except KeyboardInterrupt:
@@ -387,12 +390,12 @@ if __name__ == "__main__":
   class ArgParser(argparse.ArgumentParser):
 
     def error(self, message):
-      print "ssl_logger v" + __version__
-      print "by " + __author__
-      print
-      print "Error: " + message
-      print
-      print self.format_help().replace("usage:", "Usage:")
+      print("ssl_logger v" + __version__)
+      print("by " + __author__)
+      
+      print("Error: " + message)
+      
+      print(self.format_help().replace("usage:", "Usage:"))
       self.exit(0)
 
   parser = ArgParser(
