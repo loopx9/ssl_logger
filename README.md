@@ -1,5 +1,7 @@
 # ssl_logger
 
+fork from https://github.com/google/ssl_logger
+
 Decrypts and logs a process's SSL traffic.
 
 The functionality offered by *ssl_logger* is intended to mimic [Echo Mirage](http://resources.infosecinstitute.com/echo-mirage-walkthrough/)'s SSL logging functionality on Linux and macOS.
